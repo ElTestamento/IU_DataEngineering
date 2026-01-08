@@ -17,7 +17,6 @@ schreibt sie in MongoDB
 #Die daten werden dann in MongoDB (non-SQL) hinterlegt.
 #Organisation über Docke Compose
 #Storage auf GitHub
-#API-Key: cda1f91fb9fcd1bffd9bb4a4b049988da7b987ca0a3932a561f75eeb750124a2
 #Code:##########################################
 from httpx import request
 from kafka.protocol import API_KEYS
@@ -25,12 +24,15 @@ from kafka.protocol import API_KEYS
 
 import pandas as pd
 import requests
+import os
+from dotenv import load_dotenv
 import openpyxl
 
+load_dotenv()
 print("Script um Die Daten via API-Key von OpenAQ zu laden")
 url = "https://api.openaq.org/v3/locations/4794" #Metadaten Location
 URL = "https://api.openaq.org/v3/locations/2178/latest"#Sensordaten
-API_KEY = "cda1f91fb9fcd1bffd9bb4a4b049988da7b987ca0a3932a561f75eeb750124a2"
+API_KEY = os.getenv("OPENAQ_API_KEY")
 
 #Abfrage regelmäßig itereieren:
 response = requests.get(URL, headers={'X-API-KEy' : API_KEY})
