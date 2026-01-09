@@ -37,6 +37,27 @@ url = "https://api.openaq.org/v3/locations/4794" #Metadaten Location
 URL = "https://api.openaq.org/v3/locations/2178/latest"#Sensordaten
 API_KEY = os.getenv("OPENAQ_API_KEY")
 
+#Senosor_ID abfrage:
+SENSOR_URL = "https://api.openaq.org/v3/sensors/3917"
+
+def sensor_request(url, api_key):
+    URL = url
+    API_KEY = api_key
+
+    print(f"Sensor-Request wird eingeholt")
+    response = requests.get(URL, headers={'X-API-Key': API_KEY})
+    raw_js_data = response.json()
+    print(f"Die Keys der response sind {raw_js_data.keys()}")
+    pd.set_option('display.max_columns', None)
+    pd.set_option('display.width', None)
+    pd.set_option('display.max_rows', 100)
+    pd.set_option('display.max_colwidth', None)
+    pd.set_option('display.max_columns', None)
+    # json-data zu csv konvertieren:
+    df = pd.DataFrame(raw_js_data['results'])
+    df.to_excel('sensor_data.xlsx', index=False)
+    print(df)
+
 #Funktionen####################################
 def data_request(request_count, url, api_key):
     request_count = request_count
@@ -46,7 +67,6 @@ def data_request(request_count, url, api_key):
     print(f"Request Nr {request_count} wird eingeholt")
     response = requests.get(URL, headers={'X-API-Key': API_KEY})
     raw_js_data = response.json()
-    print(raw_js_data["results"][0])
     print(f"Die Keys der response sind {raw_js_data.keys()}")
     pd.set_option('display.max_columns', None)
     pd.set_option('display.width', None)
@@ -72,6 +92,7 @@ def request_timer ():
 if __name__ == '__main__':
     #Abfrage regelmäßig iterjieren
     request_count = 1
+    sensor_request(SENSOR_URL, API_KEY)
 
     while True:
         request_timer()
