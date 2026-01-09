@@ -1,2 +1,12 @@
-data_snapshot.csv
+# Secrets
+.env
+key.env
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# IDE
 .idea/
+.vscode/
