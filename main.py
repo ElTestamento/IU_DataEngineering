@@ -31,7 +31,7 @@ from httpx import request
 from kafka.protocol import API_KEYS
 
 #PFADE----------------------------------------
-load_dotenv(Path("C:\GitHub\IU_Data_Engineering\.venv\key.env"))
+load_dotenv(Path(r"C:\GitHub\IU_Data_Engineering\.venv\key.env"))
 print("Script um Die Daten via API-Key von OpenAQ zu laden")
 url = "https://api.openaq.org/v3/locations/4794" #Metadaten Location
 URL = "https://api.openaq.org/v3/locations/2178/latest"#Sensordaten
@@ -46,6 +46,7 @@ def data_request(request_count, url, api_key):
     print(f"Request Nr {request_count} wird eingeholt")
     response = requests.get(URL, headers={'X-API-Key': API_KEY})
     raw_js_data = response.json()
+    print(raw_js_data["results"][0])
     print(f"Die Keys der response sind {raw_js_data.keys()}")
     pd.set_option('display.max_columns', None)
     pd.set_option('display.width', None)
