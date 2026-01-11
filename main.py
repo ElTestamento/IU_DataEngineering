@@ -76,11 +76,6 @@ def data_request(request_count, url, api_key):
     response = requests.get(URL, headers={'X-API-Key': API_KEY})
     raw_js_data = response.json()
     print(f"Die Keys der response sind {raw_js_data.keys()}")
-    pd.set_option('display.max_columns', None)
-    pd.set_option('display.width', None)
-    pd.set_option('display.max_rows', 100)
-    pd.set_option('display.max_colwidth', None)
-    pd.set_option('display.max_columns', None)
 
     # json-data zu csv konvertieren:
     df = pd.DataFrame(raw_js_data['results'])
