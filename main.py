@@ -37,28 +37,36 @@ url = "https://api.openaq.org/v3/locations/4794" #Metadaten Location
 URL = "https://api.openaq.org/v3/locations/2178/latest"#Sensordaten
 API_KEY = os.getenv("OPENAQ_API_KEY")
 
-#Senosor_ID abfrage:
-SENSOR_URL = "https://api.openaq.org/v3/sensors/3917"
-
-def sensor_request(url, api_key):
-    URL = url
-    API_KEY = api_key
-
-    print(f"Sensor-Request wird eingeholt")
-    response = requests.get(URL, headers={'X-API-Key': API_KEY})
-    raw_js_data = response.json()
-    print(f"Die Keys der response sind {raw_js_data.keys()}")
-    pd.set_option('display.max_columns', None)
-    pd.set_option('display.width', None)
-    pd.set_option('display.max_rows', 100)
-    pd.set_option('display.max_colwidth', None)
-    pd.set_option('display.max_columns', None)
-    # json-data zu csv konvertieren:
-    df = pd.DataFrame(raw_js_data['results'])
-    df.to_excel('sensor_data.xlsx', index=False)
-    print(df)
-
 #Funktionen####################################
+#Einmalgige Senosor_ID abfrage:
+
+def sensor_request(api_key,sensor_lst):
+    print(f"\nSensor-Request wird eingeholt. Folgende Sensoren bietet dieser Request------------------------")
+    API_KEY = api_key
+    sensor_lst = sensor_lst
+    sensor_infos = []
+    df = pd.DataFrame()
+    for i in sensor_lst:
+        URL = f"https://api.openaq.org/v3/sensors/{i}"
+        response = requests.get(URL, headers={'X-API-Key': API_KEY})
+        raw_js_data = response.json()
+        # Extraktion auf "name" reduzieren:
+        for sensors in raw_js_data['results']:
+            sensor_infos.append({
+                                 'sensor_id':sensors['id'],
+                                 'sensor_target': sensors['parameter']['name'],
+                                 'units': sensors['parameter']['units']
+                                 })
+        # json-data zu csv konvertieren:
+        df = pd.DataFrame(sensor_infos)
+        df.to_excel('sensor_data.xlsx', index=False)
+
+    print(df)
+    return df
+    #print("Es folgt ein Mapping der SensorID auf die Funktion(Molekül:Target) und die entsprechende Einheit(Units)")
+
+
+#Repeptive Datenabfrage:
 def data_request(request_count, url, api_key):
     request_count = request_count
     URL = url
@@ -77,8 +85,11 @@ def data_request(request_count, url, api_key):
     # json-data zu csv konvertieren:
     df = pd.DataFrame(raw_js_data['results'])
     df.to_excel('latest_response_data.xlsx', index=False)
-    print(df)
+    print("\nDie Sensoren im vorliegenden Request als Liste der IDs-------------------")
+    sensor_id_lst = df['sensorsId'].tolist()
+    return sensor_id_lst, df
 
+#Setzt den Timer:
 def request_timer ():
     sec = 1
     timer_value = 10 #Testweise 10 Sekunden
@@ -89,15 +100,19 @@ def request_timer ():
         timer_value -= 1
     print(f"Timer abgelaufen: {request_count}")
 
+#Main-Fn:
 if __name__ == '__main__':
     #Abfrage regelmäßig iterjieren
     request_count = 1
-    sensor_request(SENSOR_URL, API_KEY)
-
+    #df = pd.DataFrame()
     while True:
         request_timer()
-        data_request(request_count,URL, API_KEY)
+        sensor_lst, df_data = data_request(request_count,URL, API_KEY)
+        print(sensor_lst)
+        sensor_df = sensor_request(API_KEY, sensor_lst)
+        df_data[['target', 'units']] = sensor_df[['sensor_target', 'units' ]].values
         request_count +=1
+        print(df_data)
 
 
 
