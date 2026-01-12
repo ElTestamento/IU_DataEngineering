@@ -26,17 +26,18 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 import time
-import openpyxl
-from httpx import request
-from kafka.protocol import API_KEYS
+from kafka import KafkaProducer
+import json
 
-#PFADE----------------------------------------
+
+#PFADE und Variablen----------------------------------------
 load_dotenv(Path(r"C:\GitHub\IU_Data_Engineering\.venv\key.env"))
 print("Script um Die Daten via API-Key von OpenAQ zu laden")
 url = "https://api.openaq.org/v3/locations/4794" #Metadaten Location
 URL = "https://api.openaq.org/v3/locations/2178/latest"#Sensordaten
 API_KEY = os.getenv("OPENAQ_API_KEY")
 
+topic_name= "sensor_data"
 #Funktionen####################################
 #Einmalgige Senosor_ID abfrage:
 
@@ -108,6 +109,20 @@ if __name__ == '__main__':
         df_data[['target', 'units']] = sensor_df[['sensor_target', 'units' ]].values
         request_count +=1
         print(df_data)
+        producer = KafkaProducer(
+            bootstrap_servers = 'localhost:9092',
+            value_serializer=lambda v: json.dumps(v).encode('utf-8')
+        )
+
+        for idx, row in df_data.iterrows():
+            rec = row.to_dict()
+            producer.send(topic_name, value=rec)
+            print(f"Gesendet: {rec}")
+
+        producer.flush()
+        print("Alle Daten gesendet.")
+
+
 
 
 
