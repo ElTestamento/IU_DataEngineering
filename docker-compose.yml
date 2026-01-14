@@ -19,6 +19,11 @@ services:
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+
     ports:
       - "9092:9092"
     volumes:
@@ -30,8 +35,8 @@ services:
     ports:
       - "27017:27017"
     environment:
-      MONGO_INITDB_ROOT_USERNAME: mein_username #Hier muss meine MongoDB-Benutzername hin
-      MONGO_INITDB_ROOT_PASSWORD: mein_passwort #Hier muss meine PW hin.
+      MONGO_INITDB_ROOT_USERNAME: data_engineering #Hier muss meine MongoDB-Benutzername hin
+      MONGO_INITDB_ROOT_PASSWORD: data #Hier muss meine PW hin.
     volumes:
       - mongo_data:/data/db
 volumes:
