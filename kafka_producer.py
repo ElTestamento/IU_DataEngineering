@@ -18,7 +18,6 @@ schreibt sie in MongoDB
 #Organisation über Docke Compose
 #Storage auf GitHub
 
-
 #Code:##########################################
 import pandas as pd
 import requests
