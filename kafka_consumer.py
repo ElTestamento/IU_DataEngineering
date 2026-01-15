@@ -2,6 +2,7 @@ import json
 import pandas as pd
 from kafka import KafkaConsumer
 from pymongo import MongoClient
+from pymongo.errors import BulkWriteError
 
 #Variablen/Konstanten
 batch = []
@@ -39,8 +40,11 @@ def mongo_fill():
             df = pd.DataFrame(batch)
             print("\n--- Neuer Batch empfangen ---")
             print(df.columns)
-            result = collection.insert_many(batch)
-            print(f"Eingefügt: {len(result.inserted_ids)} docs")
+            try:
+                result = collection.insert_many(batch, ordered=False)
+                print(f"Eingefügt: {len(result.inserted_ids)} docs")
+            except BulkWriteError as e:
+                print(f"Eingefügt: {e.details['nInserted']}, Duplikate übersprungen: {len(e.details['writeErrors'])}")
             batch.clear()
             print("Übergabe des Kafka-Stream an Mongo fertig.")
             pd.set_option('display.max_rows', None)
@@ -72,6 +76,18 @@ def analyse_fn():
     df_clean_pivot = analyse_df.pivot_table(index='datetime', columns='target', values='value', aggfunc = 'first')
     print(df_clean_pivot.columns)
     print(df_clean_pivot)
+
+    col_lst = ['co', 'no', 'no2', 'nox', 'o3', 'pm10', 'pm25', 'so2']
+    for i in col_lst:
+        mean_col = df_clean_pivot[i].mean()
+        for j in df_clean_pivot[i]:
+            if j > mean_col:
+                print(f"Threshold(Mean) übershcritten:{j}")
+                if j >= mean_col+(2*mean_col/10):
+                    print(f"Der Wert überragt 20% des Mittelwerts({mean_col}) und ist damit ein Ausreißer: {j}/{mean_col+(2*mean_col/10)}")
+            elif j<= mean_col:
+                print(f"Threshold(Mean) im Normbereich:{j}")
+
 
 #thresholdcheck und spikedetection gemessen an den Unterschieden der Vorwerte
 #Ausgabe mit Streamlit/Flet
