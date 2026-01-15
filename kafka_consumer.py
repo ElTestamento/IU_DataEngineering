@@ -2,8 +2,6 @@ import json
 import pandas as pd
 from kafka import KafkaConsumer
 from pymongo import MongoClient
-import numpy as np
-import time
 
 #Variablen/Konstanten
 batch = []
@@ -12,6 +10,7 @@ CONNNECTION = "mongodb://data_engineering:data@localhost:27017/?authSource=admin
 client = MongoClient(CONNNECTION) #mit Mongo-DB-Server verbinden
 db = client["sensor-streaming"]
 collection = db["sensor-data"]
+collection.create_index([('datetime',1), ('sensorsId', 1)], unique=True)
 analyse = True
 
 #Kafka-Consumer deklarieren
@@ -39,19 +38,40 @@ def mongo_fill():
         if len(batch) >= BATCH_SIZE:
             df = pd.DataFrame(batch)
             print("\n--- Neuer Batch empfangen ---")
-            print(df)
-
+            print(df.columns)
             result = collection.insert_many(batch)
             print(f"Eingefügt: {len(result.inserted_ids)} docs")
             batch.clear()
             print("Übergabe des Kafka-Stream an Mongo fertig.")
-            return df
+            pd.set_option('display.max_rows', None)
+            pd.set_option('display.max_columns', None)
+            pd.set_option('display.width', None)  # Passt die Breite an das Terminal an
+            pd.set_option('display.max_colwidth', None)  # Zeigt den vollständigen Inhalt von Zellen an
+            df_clean=df.drop(['coordinates', 'sensorsId', 'locationsId'], axis='columns')
+            print(df_clean.columns)
+            print('Convert to datetime')
+            df_clean['datetime'] = df_clean['datetime'].apply(lambda x: x['utc'])
+            df_clean['datetime'] = pd. to_datetime(df_clean['datetime'])
+            print("Nun der Pivot der Tabellen ,damit Zeitreihenanalyse möglich wird.")
+            df_clean_pivot = df_clean.pivot(index='datetime', columns='target', values='value')
+            print(df_clean_pivot.columns)
+            return df_clean_pivot
 
-def analyse_fn(df):
-    mongoDB = df
+
+def analyse_fn():
+
+    analyse_mongo = list(collection.find(({})))
+    df = pd.DataFrame(analyse_mongo)
     print("ich analysiere das Dataframe")
-    print(mongoDB)
-    print(mongoDB.describe())
+    analyse_df= df.drop(['_id','coordinates', 'sensorsId', 'locationsId'], axis='columns')
+    print(analyse_df.columns)
+    print('Convert to datetime')
+    analyse_df['datetime'] = analyse_df['datetime'].apply(lambda x: x['utc'])
+    analyse_df['datetime'] = pd.to_datetime(analyse_df['datetime'])
+    print("Nun der Pivot der Tabellen ,damit Zeitreihenanalyse möglich wird.")
+    df_clean_pivot = analyse_df.pivot_table(index='datetime', columns='target', values='value', aggfunc = 'first')
+    print(df_clean_pivot.columns)
+    print(df_clean_pivot)
 
 #thresholdcheck und spikedetection gemessen an den Unterschieden der Vorwerte
 
@@ -64,9 +84,7 @@ while analyse == True:
         mongoDB = mongo_fill()
         print(mongoDB)
     elif choice == "2":
-
-        analyse_fn(mongoDB)
-
+        analyse_fn()
     else:
         print("Programm wird beendet")
         analyse=False

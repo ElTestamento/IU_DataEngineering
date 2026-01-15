@@ -99,7 +99,6 @@ def request_timer ():
 if __name__ == '__main__':
     #Abfrage regelmäßig iterjieren
     request_count = 1
-    #df = pd.DataFrame()
     while True:
         request_timer()
         sensor_lst, df_data = data_request(request_count,URL, API_KEY)
