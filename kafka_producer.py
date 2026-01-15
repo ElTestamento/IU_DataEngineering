@@ -31,7 +31,8 @@ import json
 
 #PFADE und Variablen----------------------------------------
 load_dotenv(Path(r"C:\GitHub\IU_Data_Engineering\.venv\key.env"))
-print("Script um Die Daten via API-Key von OpenAQ zu laden")
+print("Script um die Daten via API-Key von OpenAQ zu laden")
+print("Request wird bei 100% ausgeführt und über Kafka an den Consumer gesendet.")
 url = "https://api.openaq.org/v3/locations/4794" #Metadaten Location
 URL = "https://api.openaq.org/v3/locations/2178/latest"#Sensordaten
 API_KEY = os.getenv("OPENAQ_API_KEY")
@@ -86,14 +87,20 @@ def data_request(request_count, url, api_key):
 
 #Setzt den Timer:
 def request_timer ():
-    sec = 1
-    timer_value = 10 #Testweise 10 Sekunden
+    sec = 0
+    timer_value = 1800 #Testweise 10 Sekunden
+    load_sign = '='
+    percent = 0
     while timer_value > 0:
-        print(f"{sec}")
+        if sec%18==0:
+            percent=percent+1
+            load_sign = load_sign+f'\rFortschritt:{percent}%'
+            os.system('cls')
+            print(load_sign, end="", flush=True)
         time.sleep(1)
-        sec += 1
+        sec+= 1
         timer_value -= 1
-    print(f"Timer abgelaufen: {request_count}")
+    print(f"Timer {request_count} abgelaufen")
 
 #Main-Fn:
 if __name__ == '__main__':

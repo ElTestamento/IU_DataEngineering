@@ -82,7 +82,7 @@ def analyse_fn():
         mean_col = df_clean_pivot[i].mean()
         for j in df_clean_pivot[i]:
             if j > mean_col:
-                print(f"Threshold(Mean) übershcritten:{j}")
+                print(f"Threshold(Mean) überschritten:{j}")
                 if j >= mean_col+(2*mean_col/10):
                     print(f"Der Wert überragt 20% des Mittelwerts({mean_col}) und ist damit ein Ausreißer: {j}/{mean_col+(2*mean_col/10)}")
             elif j<= mean_col:
