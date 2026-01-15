@@ -74,6 +74,7 @@ def analyse_fn():
     print(df_clean_pivot)
 
 #thresholdcheck und spikedetection gemessen an den Unterschieden der Vorwerte
+#Ausgabe mit Streamlit
 
 mongoDB = pd.DataFrame()
 while analyse == True:
