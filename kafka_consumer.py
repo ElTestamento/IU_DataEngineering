@@ -79,7 +79,6 @@ mongoDB = pd.DataFrame()
 while analyse == True:
 
     choice = input("\n1 für Datenbankabfrage/ 2 für Analyse/ 3. für Ende: ")
-
     if choice == "1":
         mongoDB = mongo_fill()
         print(mongoDB)
