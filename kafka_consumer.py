@@ -3,6 +3,10 @@ import pandas as pd
 from kafka import KafkaConsumer
 from pymongo import MongoClient
 from pymongo.errors import BulkWriteError
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+import streamlit as st
 
 #Variablen/Konstanten
 batch = []
@@ -18,11 +22,14 @@ analyse = True
 consumer = KafkaConsumer('sensor_data',
                          bootstrap_servers='localhost:9092',
                          auto_offset_reset = 'earliest',
-                         group_id='my_consumer_group',
-                         enable_auto_commit=True,)
+                         group_id='tareks_sensor_consumer',
+                         enable_auto_commit=True,
+                         consumer_timeout_ms=5000)
 
 #Funktionen
 def mongo_fill():
+    total_inserted = 0
+    total_duplicates = 0
 
     for message in consumer:
         m = message.value
@@ -37,30 +44,24 @@ def mongo_fill():
         batch.append(data)
 
         if len(batch) >= BATCH_SIZE:
-            df = pd.DataFrame(batch)
-            print("\n--- Neuer Batch empfangen ---")
-            print(df.columns)
             try:
                 result = collection.insert_many(batch, ordered=False)
-                print(f"Eingefügt: {len(result.inserted_ids)} docs")
+                total_inserted += len(result.inserted_ids)
             except BulkWriteError as e:
-                print(f"Eingefügt: {e.details['nInserted']}, Duplikate übersprungen: {len(e.details['writeErrors'])}")
+                total_inserted += e.details['nInserted']
+                total_duplicates += len(e.details['writeErrors'])
             batch.clear()
-            print("Übergabe des Kafka-Stream an Mongo fertig.")
-            pd.set_option('display.max_rows', None)
-            pd.set_option('display.max_columns', None)
-            pd.set_option('display.width', None)  # Passt die Breite an das Terminal an
-            pd.set_option('display.max_colwidth', None)  # Zeigt den vollständigen Inhalt von Zellen an
-            df_clean=df.drop(['coordinates', 'sensorsId', 'locationsId'], axis='columns')
-            print(df_clean.columns)
-            print('Convert to datetime')
-            df_clean['datetime'] = df_clean['datetime'].apply(lambda x: x['utc'])
-            df_clean['datetime'] = pd. to_datetime(df_clean['datetime'])
-            print("Nun der Pivot der Tabellen ,damit Zeitreihenanalyse möglich wird.")
-            df_clean_pivot = df_clean.pivot(index='datetime', columns='target', values='value')
-            print(df_clean_pivot.columns)
-            return df_clean_pivot
 
+    if batch:
+        try:
+            result = collection.insert_many(batch, ordered=False)
+            total_inserted += len(result.inserted_ids)
+        except BulkWriteError as e:
+            total_inserted += e.details['nInserted']
+            total_duplicates += len(e.details['writeErrors'])
+        batch.clear()
+
+    print(f"\nFertig: {total_inserted} eingefügt, {total_duplicates} Duplikate übersprungen")
 
 def analyse_fn():
 
@@ -82,15 +83,20 @@ def analyse_fn():
         mean_col = df_clean_pivot[i].mean()
         for j in df_clean_pivot[i]:
             if j > mean_col:
-                print(f"Threshold(Mean) überschritten:{j}")
+                print(f"Threshold(Mean) für {i} überschritten:{j}")
                 if j >= mean_col+(2*mean_col/10):
-                    print(f"Der Wert überragt 20% des Mittelwerts({mean_col}) und ist damit ein Ausreißer: {j}/{mean_col+(2*mean_col/10)}")
+                    print(f"Der Wert für {i} überragt 20% des Mittelwerts({mean_col}) und ist damit ein Ausreißer: {j}/{mean_col+(2*mean_col/10)}")
             elif j<= mean_col:
-                print(f"Threshold(Mean) im Normbereich:{j}")
+                print(f"Threshold(Mean) für {i} is im Normbereich:{j}")
+    fig, axes = plt.subplots(2, 4, figsize=(16, 8))
+    axes = axes.flatten()
 
+    for i, col in enumerate(col_lst):
+        axes[i].plot(df_clean_pivot.index, df_clean_pivot[col])
+        axes[i].set_title(col)
 
-#thresholdcheck und spikedetection gemessen an den Unterschieden der Vorwerte
-#Ausgabe mit Streamlit/Flet
+    plt.tight_layout()
+    plt.show()
 
 mongoDB = pd.DataFrame()
 while analyse == True:
@@ -98,14 +104,11 @@ while analyse == True:
     choice = input("\n1 für Datenbankabfrage/ 2 für Analyse/ 3. für Ende: ")
     if choice == "1":
         mongoDB = mongo_fill()
-        print(mongoDB)
     elif choice == "2":
         analyse_fn()
     else:
         print("Programm wird beendet")
         analyse=False
-
-
 
 
 

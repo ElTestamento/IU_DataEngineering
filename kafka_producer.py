@@ -29,6 +29,7 @@ from kafka import KafkaProducer
 import json
 
 
+
 #PFADE und Variablen----------------------------------------
 load_dotenv(Path(r"C:\GitHub\IU_Data_Engineering\.venv\key.env"))
 print("Script um die Daten via API-Key von OpenAQ zu laden")
