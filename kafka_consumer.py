@@ -1,9 +1,7 @@
 import json
 import pandas as pd
 from kafka import KafkaConsumer
-from pymongo import MongoClient
 from pymongo.errors import BulkWriteError
-import matplotlib.pyplot as plt
 from config import batch, BATCH_SIZE, collection
 from analyzer import analyse_fn
 
@@ -52,9 +50,9 @@ def mongo_fill():
 
     print(f"\nFertig: {total_inserted} eingefügt, {total_duplicates} Duplikate übersprungen")
 
+running =True
 mongoDB = pd.DataFrame()
-while analyse == True:
-
+while running:
     choice = input("\n1 für Datenbankabfrage/ 2 für Analyse/ 3. für Ende: ")
     if choice == "1":
         mongoDB = mongo_fill()
@@ -62,7 +60,7 @@ while analyse == True:
         analyse_fn()
     elif choice == "3":
         print("Programm wird beendet")
-        analyse=False
+        running=False
 
 
 

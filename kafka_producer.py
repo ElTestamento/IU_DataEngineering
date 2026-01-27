@@ -1,24 +1,14 @@
-
-#Code:##########################################
 import pandas as pd
 import requests
-import os
-from pathlib import Path
-from dotenv import load_dotenv
 import time
 from kafka import KafkaProducer
 import json
-import config
+from config import API_KEY, url, URL, topic_name
 
 #PFADE und Variablen----------------------------------------
-load_dotenv()
 print("Script um die Daten via API-Key von OpenAQ zu laden")
 print("Request wird bei 100% ausgeführt und über Kafka an den Consumer gesendet.")
-url = "https://api.openaq.org/v3/locations/4794" #Metadaten Location
-URL = "https://api.openaq.org/v3/locations/2178/latest"#Sensordaten
-API_KEY = os.getenv("OPENAQ_API_KEY")
 
-topic_name= "sensor_data"
 #Funktionen####################################
 #Einmalgige Senosor_ID abfrage:
 def sensor_request(api_key,sensor_lst):
@@ -65,11 +55,12 @@ def data_request(request_count, url, api_key):
     return sensor_id_lst, df
 
 #Setzt den Timer:
-def request_timer():
+def request_timer(request_count):
     sec = 0
     timer_value = 1800 #Testweise 10 Sekunden
     load_sign = '='
     percent = 0
+    request_count = request_count
     while timer_value > 0:
         if sec%18==0:
             percent=percent+1
@@ -90,7 +81,7 @@ if __name__ == '__main__':
         value_serializer=lambda v: json.dumps(v).encode('utf-8')
     )
     while True:
-        request_timer()
+        request_timer(request_count)
         sensor_lst, df_data = data_request(request_count,URL, API_KEY)
         print(sensor_lst)
         sensor_df = sensor_request(API_KEY, sensor_lst)
