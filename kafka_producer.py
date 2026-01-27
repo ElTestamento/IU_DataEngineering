@@ -1,22 +1,3 @@
-#Projekt Architekturpunkte:######################
-#Datenquelle: OpenAQ (https://docs.openaq.org/using-the-api/api-key)
-#https://explore.openaq.org/?location=4794#12/52.36292/9.70612
-#Data:Timestamps, Messungen in Hannover:
-# NO mass µg/m³, NO₂ mass µg/m³, O₃ mass µg/m³, PM10 µg/m³, PM2.5 µg/m³
-#Geplante Architektur:
-
-"""[Python Producer] → [Kafka Topic] → [Python Consumer] → [MongoDB]
-       ↑                                    ↓
-   (API Abfrage)                    (Optional: Visualisierung)
-
-Was jede Komponente tut:
-KomponenteAufgabeProducerHolt Daten von OpenAQ, schickt sie als Message an KafkaKafkaNimmt Messages entgegen,
-speichert sie in einem Topic, stellt sie für Consumer bereitConsumerLiest Messages aus Kafka,
-schreibt sie in MongoDB
-"""
-#Die daten werden dann in MongoDB (non-SQL) hinterlegt.
-#Organisation über Docke Compose
-#Storage auf GitHub
 
 #Code:##########################################
 import pandas as pd
@@ -27,6 +8,7 @@ from dotenv import load_dotenv
 import time
 from kafka import KafkaProducer
 import json
+import config
 
 #PFADE und Variablen----------------------------------------
 load_dotenv()
@@ -39,7 +21,6 @@ API_KEY = os.getenv("OPENAQ_API_KEY")
 topic_name= "sensor_data"
 #Funktionen####################################
 #Einmalgige Senosor_ID abfrage:
-
 def sensor_request(api_key,sensor_lst):
     print(f"\nSensor-Request wird eingeholt. Folgende Sensoren bietet dieser Request------------------------")
     API_KEY = api_key
@@ -65,7 +46,6 @@ def sensor_request(api_key,sensor_lst):
     return df
     #print("Es folgt ein Mapping der SensorID auf die Funktion(Molekül:Target) und die entsprechende Einheit(Units)")
 
-
 #Repeptive Datenabfrage:
 def data_request(request_count, url, api_key):
     request_count = request_count
@@ -85,7 +65,7 @@ def data_request(request_count, url, api_key):
     return sensor_id_lst, df
 
 #Setzt den Timer:
-def request_timer ():
+def request_timer():
     sec = 0
     timer_value = 1800 #Testweise 10 Sekunden
     load_sign = '='
@@ -94,7 +74,7 @@ def request_timer ():
         if sec%18==0:
             percent=percent+1
             load_sign = load_sign+f'\rFortschritt:{percent}%'
-            os.system('cls')
+            print("\033c", end="")
             print(load_sign, end="", flush=True)
         time.sleep(1)
         sec+= 1
@@ -105,6 +85,10 @@ def request_timer ():
 if __name__ == '__main__':
     #Abfrage regelmäßig iterjieren
     request_count = 1
+    producer = KafkaProducer(
+        bootstrap_servers='localhost:9092',
+        value_serializer=lambda v: json.dumps(v).encode('utf-8')
+    )
     while True:
         request_timer()
         sensor_lst, df_data = data_request(request_count,URL, API_KEY)
@@ -113,10 +97,6 @@ if __name__ == '__main__':
         df_data[['target', 'units']] = sensor_df[['sensor_target', 'units' ]].values
         request_count +=1
         print(df_data)
-        producer = KafkaProducer(
-            bootstrap_servers = 'localhost:9092',
-            value_serializer=lambda v: json.dumps(v).encode('utf-8')
-        )
 
         for idx, row in df_data.iterrows():
             rec = row.to_dict()
