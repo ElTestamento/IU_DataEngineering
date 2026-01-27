@@ -28,10 +28,8 @@ import time
 from kafka import KafkaProducer
 import json
 
-
-
 #PFADE und Variablen----------------------------------------
-load_dotenv(Path(r"C:\GitHub\IU_Data_Engineering\.venv\key.env"))
+load_dotenv()
 print("Script um die Daten via API-Key von OpenAQ zu laden")
 print("Request wird bei 100% ausgeführt und über Kafka an den Consumer gesendet.")
 url = "https://api.openaq.org/v3/locations/4794" #Metadaten Location

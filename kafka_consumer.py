@@ -3,10 +3,7 @@ import pandas as pd
 from kafka import KafkaConsumer
 from pymongo import MongoClient
 from pymongo.errors import BulkWriteError
-import seaborn as sns
 import matplotlib.pyplot as plt
-
-import streamlit as st
 
 #Variablen/Konstanten
 batch = []
