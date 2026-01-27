@@ -19,3 +19,7 @@ Menu Options:
 •	1 – Fetch data from Kafka and store in MongoDB (duplicates are automatically filtered)
 •	2 – Run rudimentary analysis: displays threshold checks, outlier detection, and sensor trend plots
 •	3 – Exit program
+
+caveat: if kafka crashes
+    -docker-compose down -v
+    -docker-compose up -d

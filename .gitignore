@@ -1,6 +1,6 @@
 # Secrets
 .env
-key.env
+.env
 
 # Python
 .venv/

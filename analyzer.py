@@ -18,6 +18,8 @@ def analyse_fn():
     print(df_clean_pivot)
 
     col_lst = ['co', 'no', 'no2', 'nox', 'o3', 'pm10', 'pm25', 'so2']
+    units_dict = {'co': 'ppm', 'no': 'ppm', 'no2': 'ppm', 'nox': 'ppm',
+                  'o3': 'ppm', 'pm10': 'µg/m³', 'pm25': 'µg/m³', 'so2': 'ppm'}
     ausreisser_liste = []
     threshold_liste = []
 
@@ -45,8 +47,8 @@ def analyse_fn():
     fig, axes = plt.subplots(2, 4, figsize=(16, 8))
     axes = axes.flatten()
     for i, col in enumerate(col_lst):
-        axes[i].plot(df_clean_pivot.index, df_clean_pivot[col])
-        axes[i].set_title(col)
+        axes[i].plot(df_clean_pivot.index, df_clean_pivot[col], marker='o')
+        axes[i].set_title(f"{col} ({units_dict[col]})")
 
     plt.tight_layout()
     plt.show()

@@ -4,8 +4,10 @@ import time
 from kafka import KafkaProducer
 import json
 from config import API_KEY, url, URL, topic_name
+from logger import logger
 
 #PFADE und Variablen----------------------------------------
+logger.info("Script gestartet - OpenAQ Producer")
 print("Script um die Daten via API-Key von OpenAQ zu laden")
 print("Request wird bei 100% ausgeführt und über Kafka an den Consumer gesendet.")
 
@@ -42,17 +44,22 @@ def data_request(request_count, url, api_key):
     URL = url
     API_KEY = api_key
 
-    print(f"Request Nr {request_count} wird eingeholt")
+    logger.info(f"Request Nr {request_count} wird eingeholt")
     response = requests.get(URL, headers={'X-API-Key': API_KEY})
+
+    if response.status_code != 200:
+        logger.error(f"API-Fehler: {response.status_code}")
+
     raw_js_data = response.json()
     print(f"Die Keys der response sind {raw_js_data.keys()}")
 
-    # json-data zu csv konvertieren:
     df = pd.DataFrame(raw_js_data['results'])
     df.to_excel('latest_response_data.xlsx', index=False)
     print("\nDie Sensoren im vorliegenden Request als Liste der IDs-------------------")
     sensor_id_lst = df['sensorsId'].tolist()
+
     return sensor_id_lst, df
+
 
 #Setzt den Timer:
 def request_timer(request_count):
@@ -92,10 +99,10 @@ if __name__ == '__main__':
         for idx, row in df_data.iterrows():
             rec = row.to_dict()
             producer.send(topic_name, value=rec)
-            print(f"Gesendet: {rec}")
+            logger.info(f"Gesendet: {rec}")
 
         producer.flush()
-        print("Alle Daten gesendet.")
+        logger.info("Alle Daten gesendet.")
 
 
 

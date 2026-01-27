@@ -4,6 +4,7 @@ from kafka import KafkaConsumer
 from pymongo.errors import BulkWriteError
 from config import batch, BATCH_SIZE, collection
 from analyzer import analyse_fn
+from logger import logger
 
 #Kafka-Consumer deklarieren
 consumer = KafkaConsumer('sensor_data',
@@ -26,6 +27,7 @@ def mongo_fill():
         elif isinstance(m, dict):
             data = m
         else:
+            logger.error(f"Unexpected message type: {type(m)}")
             raise TypeError(f"Unexpected message.value type: {type(m)}")
 
         batch.append(data)
@@ -48,7 +50,7 @@ def mongo_fill():
             total_duplicates += len(e.details['writeErrors'])
         batch.clear()
 
-    print(f"\nFertig: {total_inserted} eingefügt, {total_duplicates} Duplikate übersprungen")
+    logger.info(f"Fertig: {total_inserted} eingefügt, {total_duplicates} Duplikate übersprungen")
 
 running =True
 mongoDB = pd.DataFrame()
