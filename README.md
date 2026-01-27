@@ -5,6 +5,7 @@ Make sure:
 Deps:
 •	Python 3.10+ with dependencies: kafka-python, pymongo, pandas, matplotlib, seaborn
 •	OpenAQ API Key (stored in .env file). Use your own unique ID please 
+    VariableName in the .env file: OPENAQ_API_KEY='Your API-Key'
 Quick Start
 1. Start Docker Services
 Ensure Docker Desktop is running, then start all containers:
